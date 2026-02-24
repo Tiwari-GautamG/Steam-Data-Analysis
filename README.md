@@ -58,16 +58,8 @@ A modern Flask web application featuring interactive data visualizations and a m
 pip install -r requirements.txt
 ```
 
-2. **Configure database connection**
-Edit `app.py` and update the database credentials:
-```python
-db_username = 'your_username'
-db_password = 'your_password'
-db_host = 'localhost'
-db_name = 'steam_data'
-```
 
-3. **Ensure your database has the required table**
+2. **Ensure your database has the required table**
 The app expects a table named `steamout` with these columns:
 - Title (varchar)
 - Price (int)
@@ -84,11 +76,7 @@ The app expects a table named `steamout` with these columns:
 
 ## Running the Application
 
-```bash
-python app.py
-```
-
-The application will be available at: `http://localhost:5000`
+The application will be available at: `https://steam-data-analysis.onrender.com`
 
 ## Project Structure
 

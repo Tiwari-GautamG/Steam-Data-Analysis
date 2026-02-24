@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steam Games Dashboard - Analytics & Insights</title>
+    <meta name="description"
+        content="Comprehensive analytics dashboard for Steam games featuring price trends, reviews, and genre insights">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <svg class="nav-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
+                    <path
+                        d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                    </path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+                <h1>Steam Analytics</h1>
+            </div>
+            <div class="nav-links">
+                <a href="/" class="nav-link active">Dashboard</a>
+                <a href="/recommendations" class="nav-link">Recommendations</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <header class="header">
+            <h2 class="header-title">Game Data Analysis Dashboard</h2>
+            <p class="header-subtitle">Explore insights, trends, and patterns across thousands of Steam games</p>
+        </header>
+
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 7h-9"></path>
+                        <path d="M14 17H5"></path>
+                        <circle cx="17" cy="17" r="3"></circle>
+                        <circle cx="7" cy="7" r="3"></circle>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-label">Total Games</h3>
+                    <p class="stat-value">{{ stats.total_games }}</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-label">Average Price</h3>
+                    <p class="stat-value">{{ stats.avg_price }}</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                        <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-label">Avg Discount</h3>
+                    <p class="stat-value">{{ stats.avg_discount }}</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-label">Total Reviews</h3>
+                    <p class="stat-value">{{ stats.total_reviews }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visualizations Grid -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div id="priceChart" style="width:100%;height:400px;"></div>
+            </div>
+
+            <div class="chart-card">
+                <div id="tagsChart" style="width:100%;height:400px;"></div>
+            </div>
+
+            <div class="chart-card">
+                <div id="reviewsChart" style="width:100%;height:400px;"></div>
+            </div>
+
+            <div class="chart-card">
+                <div id="yearChart" style="width:100%;height:400px;"></div>
+            </div>
+
+            <div class="chart-card span-2">
+                <div id="correlationChart" style="width:100%;height:400px;"></div>
+            </div>
+
+            <div class="chart-card">
+                <div id="discountChart" style="width:100%;height:400px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>© 2026 Steam Analytics Dashboard. Built with Flask & Plotly</p>
+        </div>
+    </footer>
+
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM fully loaded, initializing charts...');
+
+            const graphs = {
+                price: {{ graphs.price | safe }},
+                tags: {{ graphs.tags | safe }},
+                reviews: {{ graphs.reviews | safe }},
+                year: {{ graphs.year | safe }},
+                discount: {{ graphs.discount | safe }},
+                correlation: {{ graphs.correlation | safe }}
+            };
+
+            // #region agent log
+            function writeBrowserLog(message, data) {
+                fetch('http://127.0.0.1:7242/ingest/8debba02-467b-4346-b152-637d369b44cd', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        location: 'home.html:chart_rendering',
+                        message: message,
+                        data: data || {},
+                        timestamp: Date.now(),
+                        sessionId: 'debug-session',
+                        runId: 'initial_run',
+                        hypothesisId: 'hypothesis_4'
+                    })
+                }).catch(() => {});
+            }
+            // #endregion
+
+            writeBrowserLog('JavaScript graphs object loaded', {
+                graphs_keys: Object.keys(graphs),
+                price_data_length: graphs.price ? graphs.price.data.length : 'undefined',
+                tags_data_length: graphs.tags ? graphs.tags.data.length : 'undefined'
+            });
+
+            function renderChart(id, config) {
+                const el = document.getElementById(id);
+                if (!el) {
+                    console.error('Missing chart element:', id);
+                    writeBrowserLog('Missing chart element', {chart_id: id});
+                    return;
+                }
+
+                try {
+                    if (config && config.data && config.data.length > 0) {
+                        Plotly.newPlot(id, config.data, config.layout, {
+                            responsive: false,
+                            displayModeBar: false
+                        });
+                        console.log('Rendered:', id, 'with', config.data.length, 'trace(s)');
+                        writeBrowserLog('Chart rendered successfully', {
+                            chart_id: id,
+                            traces_count: config.data.length,
+                            has_layout: !!config.layout
+                        });
+                    } else {
+                        el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#9ca3af;font-size:0.875rem;">No data available</div>';
+                        console.warn('No data for:', id);
+                        writeBrowserLog('No data available for chart', {
+                            chart_id: id,
+                            config_exists: !!config,
+                            has_data: !!(config && config.data),
+                            data_length: config && config.data ? config.data.length : 'undefined'
+                        });
+                    }
+                } catch (err) {
+                    console.error('Error rendering', id, ':', err);
+                    el.innerHTML = '<div style="color:#ef4444;padding:1rem;font-size:0.875rem;">Error rendering chart</div>';
+                    writeBrowserLog('Error rendering chart', {
+                        chart_id: id,
+                        error: err.message,
+                        config_exists: !!config
+                    });
+                }
+            }
+
+            renderChart('priceChart', graphs.price);
+            renderChart('tagsChart', graphs.tags);
+            renderChart('reviewsChart', graphs.reviews);
+            renderChart('yearChart', graphs.year);
+            renderChart('discountChart', graphs.discount);
+            renderChart('correlationChart', graphs.correlation);
+        });
+    </script>
+</body>
+
+</html>

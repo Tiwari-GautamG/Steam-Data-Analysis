@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Recommendations - Steam Analytics</title>
+    <meta name="description"
+        content="Get personalized game recommendations based on machine learning similarity analysis">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <svg class="nav-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
+                    <path
+                        d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                    </path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+                <h1>Steam Analytics</h1>
+            </div>
+            <div class="nav-links">
+                <a href="/" class="nav-link">Dashboard</a>
+                <a href="/recommendations" class="nav-link active">Recommendations</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <header class="header">
+            <h2 class="header-title">Game Recommendation Engine</h2>
+            <p class="header-subtitle">Powered by scikit-learn machine learning algorithms</p>
+        </header>
+
+        <!-- Search Section -->
+        <div class="search-section">
+            <div class="search-container">
+                <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search for a game...">
+            </div>
+            <div id="searchResults" class="search-results"></div>
+        </div>
+
+        <!-- Selected Game Info -->
+        <div id="gameInfo" class="game-info-card" style="display: none;">
+            <div class="game-info-content">
+                <img id="gameImage" class="game-image" src="" alt="Game Image">
+                <div class="game-details">
+                    <h3 id="gameTitle" class="game-title"></h3>
+                    <div class="game-meta">
+                        <span id="gamePrice" class="game-price"></span>
+                        <span id="gameReviews" class="game-reviews"></span>
+                    </div>
+                    <div class="game-tags">
+                        <span id="gameTags"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommendations Section -->
+        <div id="recommendationsSection" style="display: none;">
+            <div class="recommendations-header">
+                <h3>Recommended Games</h3>
+                <p>Based on genre similarity and game characteristics using cosine similarity</p>
+            </div>
+            <div id="recommendationsList" class="recommendations-grid"></div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+            <div class="spinner"></div>
+            <p>Finding perfect matches...</p>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>© 2026 Steam Analytics Dashboard. ML-powered recommendations using scikit-learn</p>
+        </div>
+    </footer>
+
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const gameInfo = document.getElementById('gameInfo');
+        const recommendationsSection = document.getElementById('recommendationsSection');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+
+        let debounceTimer;
+
+        // Search games
+        searchInput.addEventListener('input', function () {
+            clearTimeout(debounceTimer);
+            const query = this.value.trim();
+
+            if (query.length < 2) {
+                searchResults.style.display = 'none';
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                fetch('/api/search_games', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query: query })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        displaySearchResults(data.games);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            }, 300);
+        });
+
+        function displaySearchResults(games) {
+            if (games.length === 0) {
+                searchResults.innerHTML = '<div class="search-result-item">No games found</div>';
+                searchResults.style.display = 'block';
+                return;
+            }
+
+            searchResults.innerHTML = games.map(game =>
+                `<div class="search-result-item" onclick="selectGame('${game.replace(/'/g, "\\'")}')">${game}</div>`
+            ).join('');
+            searchResults.style.display = 'block';
+        }
+
+        function selectGame(title) {
+            searchResults.style.display = 'none';
+            searchInput.value = title;
+            loadingSpinner.style.display = 'flex';
+            gameInfo.style.display = 'none';
+            recommendationsSection.style.display = 'none';
+
+            // Get game info
+            fetch('/api/get_game_info', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ title: title })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    displayGameInfo(data);
+                    return fetch('/api/get_recommendations', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ title: title, n: 5 })
+                    });
+                })
+                .then(response => response.json())
+                .then(data => {
+                    loadingSpinner.style.display = 'none';
+                    displayRecommendations(data.recommendations);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    loadingSpinner.style.display = 'none';
+                    alert('Error loading recommendations');
+                });
+        }
+
+        function displayGameInfo(game) {
+            document.getElementById('gameImage').src = game.Image || '';
+            document.getElementById('gameTitle').textContent = game.Title;
+            document.getElementById('gamePrice').textContent = game.Price === 0 ? 'Free' : `₹${game.Price}`;
+            document.getElementById('gameReviews').textContent = game.Reviews || 'No reviews';
+            document.getElementById('gameTags').textContent = `${game.Tag1 || ''}, ${game.Tag2 || ''}`;
+
+            gameInfo.style.display = 'block';
+        }
+
+        function displayRecommendations(recommendations) {
+            const container = document.getElementById('recommendationsList');
+
+            container.innerHTML = recommendations.map(rec => `
+                <div class="recommendation-card">
+                    <img src="${rec.Image || ''}" alt="${rec.Title}" class="rec-image">
+                    <div class="rec-content">
+                        <h4 class="rec-title">${rec.Title}</h4>
+                        <div class="rec-meta">
+                            <span class="rec-price">${rec.Price === 0 ? 'Free' : '₹' + rec.Price}</span>
+                            <span class="rec-reviews">${rec.Reviews || 'No reviews'}</span>
+                        </div>
+                        <div class="rec-tags">
+                            <span class="tag">${rec.Tag1 || ''}</span>
+                            <span class="tag">${rec.Tag2 || ''}</span>
+                        </div>
+                        <div class="similarity-bar">
+                            <div class="similarity-fill" style="width: ${(rec.similarity * 100).toFixed(0)}%"></div>
+                        </div>
+                        <p class="similarity-text">${(rec.similarity * 100).toFixed(1)}% Match</p>
+                    </div>
+                </div>
+            `).join('');
+
+            recommendationsSection.style.display = 'block';
+        }
+
+        // Close search results when clicking outside
+        document.addEventListener('click', function (event) {
+            if (!event.target.closest('.search-container') && !event.target.closest('.search-results')) {
+                searchResults.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+
+</html>

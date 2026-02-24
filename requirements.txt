@@ -139,6 +139,7 @@ prompt_toolkit==3.0.51
 propcache==0.3.2
 protobuf==6.33.1
 psutil==7.0.0
+psycopg2==2.9.11
 pure_eval==0.2.3
 pycparser==2.22
 pydantic==2.12.5
@@ -233,4 +234,5 @@ xlrd==2.0.2
 xyzservices==2025.11.0
 yarl==1.20.1
 zipp==3.23.0
+
 

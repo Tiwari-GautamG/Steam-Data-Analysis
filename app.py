@@ -16,7 +16,7 @@ from datetime import datetime
 
 app = Flask(__name__)
 pio.json.config.default_engine = 'json'
-DATABASE_URL = os.environ.get("postgresql://psteamout_user:Z7aIvc3SR1iGggPP659mjVcqiRYz65v7@dpg-d6eve0ogjchc73ac0u3g-a/psteamout")
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 
 def write_debug_log(message, data=None, hypothesis_id=None):
@@ -33,7 +33,8 @@ def write_debug_log(message, data=None, hypothesis_id=None):
         f.write(json.dumps(log_entry) + "\n")
 
 df = None
-similarity_matrix = None
+sparse_features = None
+nn_model = None
 
 def get_engine():
     return create_engine(os.environ["DATABASE_URL"])
@@ -45,13 +46,12 @@ def load_data():
         df = pd.read_sql("SELECT * FROM steamout", engine)
 
 def load_similarity():
-    global similarity_matrix
-    if similarity_matrix is None:
+    global sparse_features, nn_model
+    if sparse_features is None or nn_model is None:
         load_data()
-        similarity_matrix = prepare_recommendation_data()
+        sparse_features, nn_model = prepare_recommendation_data()
 
 
-# Preprocess data for recommendations
 def prepare_recommendation_data():
     rec_df = df.copy()
     rec_df['Price'] = pd.to_numeric(df['Price'], errors='coerce').fillna(0)
@@ -77,7 +77,6 @@ def prepare_recommendation_data():
 
     return sparse_features, nn_model
 
-sparse_features, nn_model = prepare_recommendation_data()
 
 @app.route('/')
 def home():

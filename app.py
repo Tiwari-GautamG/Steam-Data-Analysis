@@ -29,7 +29,7 @@ def write_debug_log(message, data=None, hypothesis_id=None):
         "runId": "initial_run",
         "hypothesisId": hypothesis_id
     }
-    with open(r"d:\Data files\Dashboard\.cursor\debug.log", "a") as f:
+    with open("debug.log", "a") as f:
         f.write(json.dumps(log_entry) + "\n")
 
 engine = create_engine(DATABASE_URL)

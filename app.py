@@ -16,7 +16,7 @@ from datetime import datetime
 
 app = Flask(__name__)
 pio.json.config.default_engine = 'json'
-DATABASE_URL = os.environ.get("DATABASE_URL")
+DATABASE_URL = os.environ.get("DATABASE_URL").replace("postgres://", "postgresql://")
 
 
 def write_debug_log(message, data=None, hypothesis_id=None):

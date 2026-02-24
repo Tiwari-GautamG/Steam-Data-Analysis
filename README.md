@@ -76,7 +76,7 @@ The app expects a table named `steamout` with these columns:
 
 ## Running the Application
 
-The application will be available at: `https://steam-data-analysis.onrender.com`
+The application will be available at: https://steam-data-analysis.onrender.com
 
 ## Project Structure
 

@@ -32,37 +32,30 @@ def write_debug_log(message, data=None, hypothesis_id=None):
     with open("debug.log", "a") as f:
         f.write(json.dumps(log_entry) + "\n")
 
-engine = create_engine(DATABASE_URL)
+df = None
+similarity_matrix = None
 
-query = 'SELECT * FROM steamout'
-df = pd.read_sql(query, engine)
-write_debug_log("Data loaded from database", {"rows_loaded": len(df), "columns": list(df.columns)}, "hypothesis_1")
-print(f"DEBUG: Columns from DB: {df.columns.tolist()}")
+def get_engine():
+    return create_engine(os.environ["DATABASE_URL"])
 
-# Data inspection and cleaning
-print(f"\n{'='*50}")
-print(f"DATA LOADED: {len(df)} rows")
-print(f"Columns: {df.columns.tolist()}")
-print(f"\nData types:")
-print(df.dtypes)
-print(f"\nFirst few rows of Price column:")
-print(df['Price'].head(10))
-print(f"\nFirst few rows of Discount column:")
-print(df['Discount'].head(10))
-print(f"\nFirst few rows of Year column (raw):")
-print(df['Year'].head(10))
-print(f"\nNull counts:")
-print(df.isnull().sum())
-print(f"{'='*50}\n")
+def load_data():
+    global df
+    if df is None:
+        engine = get_engine()
+        df = pd.read_sql("SELECT * FROM steamout", engine)
 
-# Clean data
-df['Price'] = pd.to_numeric(df['Price'], errors='coerce').fillna(0)
-df['ReviewNum'] = pd.to_numeric(df['ReviewNum'], errors='coerce').fillna(0)
+def load_similarity():
+    global similarity_matrix
+    if similarity_matrix is None:
+        load_data()
+        similarity_matrix = prepare_recommendation_data()
+
 
 # Preprocess data for recommendations
 def prepare_recommendation_data():
-    """Prepare feature matrix for recommendation system"""
     rec_df = df.copy()
+    rec_df['Price'] = pd.to_numeric(df['Price'], errors='coerce').fillna(0)
+    rec_df['ReviewNum'] = pd.to_numeric(df['ReviewNum'], errors='coerce').fillna(0)
     
     tag1_encoded = pd.get_dummies(rec_df['Tag1'], prefix='tag1')
     tag2_encoded = pd.get_dummies(rec_df['Tag2'], prefix='tag2')
@@ -88,6 +81,7 @@ sparse_features, nn_model = prepare_recommendation_data()
 
 @app.route('/')
 def home():
+    load_data()
     write_debug_log("Home route called", {"original_df_rows": len(df)}, "hypothesis_5")
 
     df_clean = df.copy()
@@ -299,6 +293,7 @@ def home():
 
 @app.route('/recommendations')
 def recommendations():
+    load_similarity()
     games = sorted(df['Title'].unique())
     return render_template('recommendations.html', games=games)
 

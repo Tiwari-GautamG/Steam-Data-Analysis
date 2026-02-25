@@ -16,7 +16,7 @@
     <nav class="navbar">
         <div class="container">
             <div class="nav-brand">
-                <svg class="nav-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                <svg class="nav-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="2">
                     <path
                         d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
@@ -101,27 +101,27 @@
         <!-- Visualizations Grid -->
         <div class="charts-grid">
             <div class="chart-card">
-                <div id="priceChart" style="width:100%;height:400px;"></div>
+                <div id="priceChart" class="chart-container"></div>
             </div>
 
             <div class="chart-card">
-                <div id="tagsChart" style="width:100%;height:400px;"></div>
+                <div id="tagsChart" class="chart-container"></div>
             </div>
 
             <div class="chart-card">
-                <div id="reviewsChart" style="width:100%;height:400px;"></div>
+                <div id="reviewsChart" class="chart-container"></div>
             </div>
 
             <div class="chart-card">
-                <div id="yearChart" style="width:100%;height:400px;"></div>
+                <div id="yearChart" class="chart-container"></div>
             </div>
 
             <div class="chart-card span-2">
-                <div id="correlationChart" style="width:100%;height:400px;"></div>
+                <div id="correlationChart" class="chart-container"></div>
             </div>
 
             <div class="chart-card">
-                <div id="discountChart" style="width:100%;height:400px;"></div>
+                <div id="discountChart" class="chart-container"></div>
             </div>
         </div>
     </div>
@@ -132,11 +132,25 @@
         </div>
     </footer>
 
-    
+    <style>
+        .chart-container {
+            width: 100%;
+            height: 350px;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 280px;
+            }
+        }
+        @media (max-width: 480px) {
+            .chart-container {
+                height: 240px;
+            }
+        }
+    </style>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM fully loaded, initializing charts...');
-
             const graphs = {
                 price: {{ graphs.price | safe }},
                 tags: {{ graphs.tags | safe }},
@@ -146,68 +160,36 @@
                 correlation: {{ graphs.correlation | safe }}
             };
 
-            // #region agent log
-            function writeBrowserLog(message, data) {
-                fetch('http://127.0.0.1:7242/ingest/8debba02-467b-4346-b152-637d369b44cd', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        location: 'home.html:chart_rendering',
-                        message: message,
-                        data: data || {},
-                        timestamp: Date.now(),
-                        sessionId: 'debug-session',
-                        runId: 'initial_run',
-                        hypothesisId: 'hypothesis_4'
-                    })
-                }).catch(() => {});
-            }
-            // #endregion
-
-            writeBrowserLog('JavaScript graphs object loaded', {
-                graphs_keys: Object.keys(graphs),
-                price_data_length: graphs.price ? graphs.price.data.length : 'undefined',
-                tags_data_length: graphs.tags ? graphs.tags.data.length : 'undefined'
-            });
+            const isMobile = window.innerWidth <= 480;
+            const chartHeight = isMobile ? 240 : (window.innerWidth <= 768 ? 280 : 350);
 
             function renderChart(id, config) {
                 const el = document.getElementById(id);
-                if (!el) {
-                    console.error('Missing chart element:', id);
-                    writeBrowserLog('Missing chart element', {chart_id: id});
-                    return;
-                }
+                if (!el) return;
 
                 try {
                     if (config && config.data && config.data.length > 0) {
-                        Plotly.newPlot(id, config.data, config.layout, {
-                            responsive: false,
-                            displayModeBar: false
+                        // Override height in layout to match container
+                        const layout = Object.assign({}, config.layout, {
+                            height: chartHeight,
+                            margin: isMobile
+                                ? { l: 40, r: 10, t: 40, b: 40 }
+                                : { l: 60, r: 20, t: 50, b: 50 },
+                            font: Object.assign({}, config.layout && config.layout.font, {
+                                size: isMobile ? 10 : 12
+                            })
                         });
-                        console.log('Rendered:', id, 'with', config.data.length, 'trace(s)');
-                        writeBrowserLog('Chart rendered successfully', {
-                            chart_id: id,
-                            traces_count: config.data.length,
-                            has_layout: !!config.layout
+
+                        Plotly.newPlot(id, config.data, layout, {
+                            responsive: true,
+                            displayModeBar: false
                         });
                     } else {
                         el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#9ca3af;font-size:0.875rem;">No data available</div>';
-                        console.warn('No data for:', id);
-                        writeBrowserLog('No data available for chart', {
-                            chart_id: id,
-                            config_exists: !!config,
-                            has_data: !!(config && config.data),
-                            data_length: config && config.data ? config.data.length : 'undefined'
-                        });
                     }
                 } catch (err) {
                     console.error('Error rendering', id, ':', err);
                     el.innerHTML = '<div style="color:#ef4444;padding:1rem;font-size:0.875rem;">Error rendering chart</div>';
-                    writeBrowserLog('Error rendering chart', {
-                        chart_id: id,
-                        error: err.message,
-                        config_exists: !!config
-                    });
                 }
             }
 

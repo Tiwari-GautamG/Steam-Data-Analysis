@@ -14,7 +14,7 @@
     <nav class="navbar">
         <div class="container">
             <div class="nav-brand">
-                <svg class="nav-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                <svg class="nav-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="2">
                     <path
                         d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
@@ -98,7 +98,6 @@
 
         let debounceTimer;
 
-        // Search games
         searchInput.addEventListener('input', function () {
             clearTimeout(debounceTimer);
             const query = this.value.trim();
@@ -111,18 +110,12 @@
             debounceTimer = setTimeout(() => {
                 fetch('/api/search_games', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ query: query })
                 })
-                    .then(response => response.json())
-                    .then(data => {
-                        displaySearchResults(data.games);
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    });
+                .then(response => response.json())
+                .then(data => displaySearchResults(data.games))
+                .catch(error => console.error('Error:', error));
             }, 300);
         });
 
@@ -132,7 +125,6 @@
                 searchResults.style.display = 'block';
                 return;
             }
-
             searchResults.innerHTML = games.map(game =>
                 `<div class="search-result-item" onclick="selectGame('${game.replace(/'/g, "\\'")}')">${game}</div>`
             ).join('');
@@ -146,53 +138,51 @@
             gameInfo.style.display = 'none';
             recommendationsSection.style.display = 'none';
 
-            // Get game info
             fetch('/api/get_game_info', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ title: title })
             })
-                .then(response => response.json())
-                .then(data => {
-                    displayGameInfo(data);
-                    return fetch('/api/get_recommendations', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ title: title, n: 5 })
-                    });
-                })
-                .then(response => response.json())
-                .then(data => {
-                    loadingSpinner.style.display = 'none';
-                    displayRecommendations(data.recommendations);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    loadingSpinner.style.display = 'none';
-                    alert('Error loading recommendations');
+            .then(response => response.json())
+            .then(data => {
+                displayGameInfo(data);
+                return fetch('/api/get_recommendations', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: title, n: 5 })
                 });
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingSpinner.style.display = 'none';
+                displayRecommendations(data.recommendations);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                loadingSpinner.style.display = 'none';
+                alert('Error loading recommendations');
+            });
         }
 
         function displayGameInfo(game) {
-            document.getElementById('gameImage').src = game.Image || '';
+            const img = document.getElementById('gameImage');
+            img.src = game.Image || '';
+            img.onerror = () => { img.style.display = 'none'; };
+
             document.getElementById('gameTitle').textContent = game.Title;
             document.getElementById('gamePrice').textContent = game.Price === 0 ? 'Free' : `₹${game.Price}`;
             document.getElementById('gameReviews').textContent = game.Reviews || 'No reviews';
-            document.getElementById('gameTags').textContent = `${game.Tag1 || ''}, ${game.Tag2 || ''}`;
+            document.getElementById('gameTags').textContent = [game.Tag1, game.Tag2].filter(Boolean).join(', ');
 
             gameInfo.style.display = 'block';
         }
 
         function displayRecommendations(recommendations) {
             const container = document.getElementById('recommendationsList');
-
             container.innerHTML = recommendations.map(rec => `
                 <div class="recommendation-card">
-                    <img src="${rec.Image || ''}" alt="${rec.Title}" class="rec-image">
+                    <img src="${rec.Image || ''}" alt="${rec.Title}" class="rec-image"
+                         onerror="this.style.display='none'">
                     <div class="rec-content">
                         <h4 class="rec-title">${rec.Title}</h4>
                         <div class="rec-meta">
@@ -200,8 +190,8 @@
                             <span class="rec-reviews">${rec.Reviews || 'No reviews'}</span>
                         </div>
                         <div class="rec-tags">
-                            <span class="tag">${rec.Tag1 || ''}</span>
-                            <span class="tag">${rec.Tag2 || ''}</span>
+                            ${rec.Tag1 ? `<span class="tag">${rec.Tag1}</span>` : ''}
+                            ${rec.Tag2 ? `<span class="tag">${rec.Tag2}</span>` : ''}
                         </div>
                         <div class="similarity-bar">
                             <div class="similarity-fill" style="width: ${(rec.similarity * 100).toFixed(0)}%"></div>
@@ -210,11 +200,14 @@
                     </div>
                 </div>
             `).join('');
-
             recommendationsSection.style.display = 'block';
+
+            // Scroll to results on mobile
+            if (window.innerWidth <= 768) {
+                recommendationsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         }
 
-        // Close search results when clicking outside
         document.addEventListener('click', function (event) {
             if (!event.target.closest('.search-container') && !event.target.closest('.search-results')) {
                 searchResults.style.display = 'none';

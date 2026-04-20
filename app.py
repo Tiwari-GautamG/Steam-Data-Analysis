@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, jsonify
-from sqlalchemy import create_engine
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
@@ -36,14 +35,11 @@ df = None
 sparse_features = None
 nn_model = None
 
-def get_engine():
-    return create_engine(os.environ["DATABASE_URL"])
 
 def load_data():
     global df
     if df is None:
-        engine = get_engine()
-        df = pd.read_sql("SELECT * FROM steamout", engine)
+        df = pd.read_parquet('steam_data.parquet')
 
 def load_similarity():
     global sparse_features, nn_model

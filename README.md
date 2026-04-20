@@ -36,7 +36,6 @@ A modern Flask web application featuring interactive data visualizations and a m
 
 ### Backend (Python)
 - **Flask** - Web framework
-- **SQLAlchemy** - Database ORM
 - **pandas** - Data manipulation
 - **scikit-learn** - Machine learning (cosine similarity)
 - **numpy** - Numerical computations
@@ -48,8 +47,8 @@ A modern Flask web application featuring interactive data visualizations and a m
 - **JavaScript** - Interactivity and API calls
 - **Plotly.js** - Chart rendering
 
-### Database
-- **MySQL** - Steam games data storage
+### Data
+Stored as parquet file 
 
 ## Installation
 

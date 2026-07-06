@@ -1,3 +1,12 @@
+---
+title: Steam Game Recommendation System
+emoji: 🎮
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 7860
+---
+
 # Steam Games Analytics Dashboard
 
 A modern Flask web application featuring interactive data visualizations and a machine learning-powered game recommendation system.

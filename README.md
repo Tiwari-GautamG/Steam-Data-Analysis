@@ -75,7 +75,7 @@ The app expects a table named `steamout` with these columns:
 
 ## Running the Application
 
-The application will be available at: [https://huggingface.co/spaces/G-G-T/Steam-analysis]
+The application will be available at: [[https://huggingface.co/spaces/G-G-T/Steam-analysis](https://g-g-t-steam-analysis.hf.space/)]
 
 ## Project Structure
 
